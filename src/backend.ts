@@ -2,6 +2,18 @@ import { sseHeaders } from "./openai.ts";
 
 export type BackendRequest = { text: string; sessionId: number; files: unknown[] };
 
+const BROWSER_HEADERS = {
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "origin": "https://ai.achuanai.cn",
+  "referer": "https://ai.achuanai.cn/",
+  "sec-ch-ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+  "sec-ch-ua-mobile": "?0",
+  "sec-ch-ua-platform": '"Windows"',
+  "sec-fetch-dest": "empty",
+  "sec-fetch-mode": "cors",
+  "sec-fetch-site": "same-origin",
+};
+
 export function backendUrl() {
   return Deno.env.get("ACHUAN_API_URL") ?? "https://ai.achuanai.cn/api/chat/completions";
 }
@@ -20,8 +32,10 @@ export async function createBackendSession(model: string): Promise<number | null
     const res = await fetch(sessionUrl, {
       method: "POST",
       headers: {
+        ...BROWSER_HEADERS,
         "authorization": backendJwt(),
         "content-type": "application/json",
+        "accept": "application/json, text/plain, */*",
       },
       body: JSON.stringify({
         model,
@@ -134,6 +148,7 @@ export async function fetchBackendSSE(payload: BackendRequest, abortSignal: Abor
   const res = await fetch(backendUrl(), {
     method: "POST",
     headers: {
+      ...BROWSER_HEADERS,
       "authorization": backendJwt(),
       "content-type": "application/json",
       "accept": "text/event-stream",
