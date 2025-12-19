@@ -26,6 +26,15 @@ export function openAIError(status: number, message: string, code = "invalid_req
 
 export function asTextContent(content: unknown): string {
   if (typeof content === "string") return content;
+  // 支持多模态消息格式: [{ type: "text", text: "..." }, { type: "image_url", ... }]
+  if (Array.isArray(content)) {
+    return content
+      .filter((part): part is { type: "text"; text: string } =>
+        part && typeof part === "object" && part.type === "text" && typeof part.text === "string"
+      )
+      .map((part) => part.text)
+      .join("\n");
+  }
   return "";
 }
 
