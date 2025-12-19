@@ -1,22 +1,17 @@
-export const SUPPORTED_MODELS = [
+// 参考模型列表（仅用于 /v1/models 端点展示，不做验证）
+const REFERENCE_MODELS = [
   "claude-sonnet-4-5-20250929",
   "gemini-3-pro-preview",
   "gemini-3-pro-preview-image",
   "gpt-5.1-high",
   "deepseek/deepseek-v3.2-exp",
-] as const;
-
-export type SupportedModel = (typeof SUPPORTED_MODELS)[number];
-
-export function isSupportedModel(model: string): model is SupportedModel {
-  return (SUPPORTED_MODELS as readonly string[]).includes(model);
-}
+];
 
 export function modelsListResponse() {
   const now = Math.floor(Date.now() / 1000);
   return {
     object: "list",
-    data: SUPPORTED_MODELS.map((id) => ({
+    data: REFERENCE_MODELS.map((id) => ({
       id,
       object: "model",
       created: now,

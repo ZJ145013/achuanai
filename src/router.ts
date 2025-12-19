@@ -1,4 +1,4 @@
-import { modelsListResponse, isSupportedModel } from "./models.ts";
+import { modelsListResponse } from "./models.ts";
 import { json, openAIError, messagesToText, openAIChunk } from "./openai.ts";
 import { resolveSessionId, getSessionCacheKey, getCachedSession, setCachedSession } from "./session.ts";
 import { fetchBackendSSE, proxyBackendSSEToOpenAI, createBackendSession, isSessionNotFoundError, parseNonStreamResponse } from "./backend.ts";
@@ -16,7 +16,6 @@ export async function route(req: Request): Promise<Response> {
 
     const model = (body as any).model;
     if (typeof model !== "string" || model.trim() === "") return openAIError(400, "缺少 model");
-    if (!isSupportedModel(model)) return openAIError(400, `不支持的 model: ${model}`);
 
     const messages = (body as any).messages;
     if (!Array.isArray(messages) || messages.length === 0) {
