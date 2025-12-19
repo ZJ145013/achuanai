@@ -42,7 +42,14 @@ export type BackendFile = { name: string; data: string };
 
 export function extractFilesFromMessages(messages: OpenAIChatMessage[]): BackendFile[] {
   const files: BackendFile[] = [];
-  let imageIndex = 0;
+  let fileIndex = 0;
+
+  // MIME 类型到扩展名的映射
+  const mimeToExt: Record<string, string> = {
+    "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp",
+    "application/pdf": "pdf", "text/plain": "txt", "text/csv": "csv",
+    "application/json": "json", "application/xml": "xml",
+  };
 
   for (const m of messages) {
     if (m.role !== "user") continue;
@@ -50,14 +57,24 @@ export function extractFilesFromMessages(messages: OpenAIChatMessage[]): Backend
     if (!Array.isArray(content)) continue;
 
     for (const part of content) {
-      if (part && typeof part === "object" && part.type === "image_url" && part.image_url?.url) {
-        const url = part.image_url.url as string;
-        // 支持 data:image/xxx;base64,... 格式
-        if (url.startsWith("data:image/")) {
-          const match = url.match(/^data:image\/(\w+);/);
-          const ext = match?.[1] || "png";
-          files.push({ name: `image${String(imageIndex++).padStart(3, "0")}.${ext}`, data: url });
-        }
+      if (!part || typeof part !== "object") continue;
+
+      let dataUrl: string | undefined;
+
+      // 支持 image_url 类型
+      if (part.type === "image_url" && part.image_url?.url) {
+        dataUrl = part.image_url.url as string;
+      }
+      // 支持 file 类型 (部分 OpenAI 兼容 API 使用)
+      else if (part.type === "file" && part.file?.url) {
+        dataUrl = part.file.url as string;
+      }
+
+      if (dataUrl?.startsWith("data:")) {
+        const match = dataUrl.match(/^data:([^;]+);/);
+        const mime = match?.[1] || "application/octet-stream";
+        const ext = mimeToExt[mime] || mime.split("/")[1] || "bin";
+        files.push({ name: `file${String(fileIndex++).padStart(3, "0")}.${ext}`, data: dataUrl });
       }
     }
   }
