@@ -1,5 +1,5 @@
 import { modelsListResponse } from "./models.ts";
-import { json, openAIError, messagesToText, openAIChunk } from "./openai.ts";
+import { json, openAIError, messagesToText, openAIChunk, extractFilesFromMessages } from "./openai.ts";
 import { resolveSessionId, getSessionCacheKey, getCachedSession, setCachedSession } from "./session.ts";
 import { fetchBackendSSE, proxyBackendSSEToOpenAI, createBackendSession, isSessionNotFoundError, parseNonStreamResponse } from "./backend.ts";
 
@@ -24,6 +24,8 @@ export async function route(req: Request): Promise<Response> {
 
     const text = messagesToText(messages);
     if (!text) return openAIError(400, "无法从 messages 提取文本");
+
+    const files = extractFilesFromMessages(messages);
 
     let { sessionId, setHeader, cacheKey } = resolveSessionId(req, body);
     const stream = (body as any).stream ?? false;
@@ -53,7 +55,7 @@ export async function route(req: Request): Promise<Response> {
     req.signal.addEventListener("abort", () => controller.abort());
 
     const doRequest = async (sid: number) => {
-      return fetchBackendSSE({ text, sessionId: sid, files: [] }, controller.signal).catch((err) => {
+      return fetchBackendSSE({ text, sessionId: sid, files }, controller.signal).catch((err) => {
         const message = err instanceof Error ? err.message : String(err);
         return new Response(
           JSON.stringify({

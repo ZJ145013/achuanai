@@ -38,6 +38,32 @@ export function asTextContent(content: unknown): string {
   return "";
 }
 
+export type BackendFile = { name: string; data: string };
+
+export function extractFilesFromMessages(messages: OpenAIChatMessage[]): BackendFile[] {
+  const files: BackendFile[] = [];
+  let imageIndex = 0;
+
+  for (const m of messages) {
+    if (m.role !== "user") continue;
+    const content = m.content;
+    if (!Array.isArray(content)) continue;
+
+    for (const part of content) {
+      if (part && typeof part === "object" && part.type === "image_url" && part.image_url?.url) {
+        const url = part.image_url.url as string;
+        // 支持 data:image/xxx;base64,... 格式
+        if (url.startsWith("data:image/")) {
+          const match = url.match(/^data:image\/(\w+);/);
+          const ext = match?.[1] || "png";
+          files.push({ name: `image${String(imageIndex++).padStart(3, "0")}.${ext}`, data: url });
+        }
+      }
+    }
+  }
+  return files;
+}
+
 export function messagesToText(messages: OpenAIChatMessage[]): string {
   // Only send the last user message (backend session maintains history)
   for (let i = messages.length - 1; i >= 0; i--) {
