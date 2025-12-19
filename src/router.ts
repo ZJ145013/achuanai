@@ -32,7 +32,7 @@ export async function route(req: Request): Promise<Response> {
     // Check if we have a cached backend session for this user+model
     const fullCacheKey = cacheKey ? getSessionCacheKey(cacheKey, model) : null;
     if (fullCacheKey) {
-      const cachedSid = getCachedSession(fullCacheKey);
+      const cachedSid = await getCachedSession(fullCacheKey);
       if (cachedSid) {
         sessionId = cachedSid;
         setHeader = false;
@@ -45,7 +45,7 @@ export async function route(req: Request): Promise<Response> {
       if (newSessionId) {
         sessionId = newSessionId;
         if (fullCacheKey) {
-          setCachedSession(fullCacheKey, newSessionId);
+          await setCachedSession(fullCacheKey, newSessionId);
         }
       }
     }
@@ -78,7 +78,7 @@ export async function route(req: Request): Promise<Response> {
           sessionId = newSessionId;
           setHeader = true;
           if (fullCacheKey) {
-            setCachedSession(fullCacheKey, newSessionId);
+            await setCachedSession(fullCacheKey, newSessionId);
           }
           backendResp = await doRequest(sessionId);
           if (!(backendResp instanceof Response)) return backendResp;
@@ -102,7 +102,7 @@ export async function route(req: Request): Promise<Response> {
               sessionId = newSessionId;
               setHeader = true;
               if (fullCacheKey) {
-                setCachedSession(fullCacheKey, newSessionId);
+                await setCachedSession(fullCacheKey, newSessionId);
               }
               backendResp = await doRequest(sessionId);
               if (!(backendResp instanceof Response)) return backendResp;

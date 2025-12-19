@@ -7,19 +7,38 @@ function fnv1a32(input: string): number {
   return hash | 0;
 }
 
-// Cache: localKey -> backendSessionId
-const sessionCache = new Map<string, number>();
+// Use Deno KV for persistent session cache (works across Deno Deploy instances)
+let kv: Deno.Kv | null = null;
+
+async function getKv(): Promise<Deno.Kv> {
+  if (!kv) {
+    kv = await Deno.openKv();
+  }
+  return kv;
+}
 
 export function getSessionCacheKey(identifier: string, model: string): string {
   return `${identifier}:${model}`;
 }
 
-export function getCachedSession(key: string): number | null {
-  return sessionCache.get(key) ?? null;
+export async function getCachedSession(key: string): Promise<number | null> {
+  try {
+    const db = await getKv();
+    const result = await db.get<number>(["session", key]);
+    return result.value;
+  } catch {
+    return null;
+  }
 }
 
-export function setCachedSession(key: string, backendSessionId: number): void {
-  sessionCache.set(key, backendSessionId);
+export async function setCachedSession(key: string, backendSessionId: number): Promise<void> {
+  try {
+    const db = await getKv();
+    // Set with 24 hour expiration
+    await db.set(["session", key], backendSessionId, { expireIn: 24 * 60 * 60 * 1000 });
+  } catch {
+    // Ignore errors
+  }
 }
 
 export function parseSessionId(value: string | null): number | null {
