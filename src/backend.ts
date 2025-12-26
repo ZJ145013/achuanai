@@ -4,7 +4,7 @@ export type BackendRequest = { text: string; sessionId: number; files: unknown[]
 
 const BROWSER_HEADERS = {
   "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-  "referer": "https://achuanai.app/chat",
+  "referer": "https://achuanai.vip/chat",
   "sec-ch-ua": '"Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"',
   "sec-ch-ua-mobile": "?0",
   "sec-ch-ua-platform": '"macOS"',
@@ -12,7 +12,7 @@ const BROWSER_HEADERS = {
 };
 
 export function backendUrl() {
-  return Deno.env.get("ACHUAN_API_URL") ?? "https://achuanai.app/api/chat/completions";
+  return Deno.env.get("ACHUAN_API_URL") ?? "https://achuanai.vip/api/chat/completions";
 }
 
 export function backendJwt() {
